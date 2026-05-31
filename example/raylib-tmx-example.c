@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         BeginDrawing();
         {
             ClearBackground(RAYWHITE);
-            DrawTMX(map, position.x, position.y, WHITE);
+            DrawTMX(map, position.x, position.y, WHITE, 1.0);
             if (drawCollisions) CollisionsTMXForeach(map, DrawCollisons, &position);
             DrawFPS(10, 10);
             DrawText("Move arround with arrow keys. ", 10, 40, 20, DARKGRAY);

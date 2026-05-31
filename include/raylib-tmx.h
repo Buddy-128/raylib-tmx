@@ -73,10 +73,10 @@ typedef void (*tmx_collision_functor)(tmx_object *object, RaylibTMXCollision col
 tmx_map* LoadTMX(const char* fileName);                                                                // Load a Tiled .tmx tile map
 void UnloadTMX(tmx_map* map);                                                                          // Unload the given Tiled map
 Color ColorFromTMX(uint32_t color);                                                                    // Convert a Tiled color number to a raylib Color
-void DrawTMX(tmx_map *map, int posX, int posY, Color tint);                                            // Render the given Tiled map to the screen
-void DrawTMXLayers(tmx_map *map, tmx_layer *layers, int posX, int posY, Color tint);                   // Render all the given map layers to the screen
-void DrawTMXLayer(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint);                     // Render a single map layer on the screen
-void DrawTMXTile(tmx_tile* tile, unsigned int baseGid, int posX, int posY, Color tint);                // Render the given tile to the screen
+void DrawTMX(tmx_map *map, int posX, int posY, Color tint, float scale);                                            // Render the given Tiled map to the screen
+void DrawTMXLayers(tmx_map *map, tmx_layer *layers, int posX, int posY, Color tint, float scale);                   // Render all the given map layers to the screen
+void DrawTMXLayer(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint, float scale);                     // Render a single map layer on the screen
+void DrawTMXTile(tmx_tile* tile, unsigned int baseGid, int posX, int posY, Color tint, float scale);                // Render the given tile to the screen
 void DrawTMXObjectTile(tmx_tile* tile, int baseGid, Rectangle destRect, float rotation, Color tint);   // Render the tile of a given object to the screen
 void UpdateTMXTileAnimation(tmx_map* map, tmx_tile** tile);                                            // Controls the animation state of a tile and return the LID of the current animation
 void CollisionsTMXForeach(tmx_map *map, tmx_collision_functor callback, void* userdata);               // Returns each tmx_object on a given map and their collisions on a callback
@@ -374,7 +374,7 @@ void UpdateTMXTileAnimation(tmx_map* map, tmx_tile** tile){
     float* frameCounter      = &animState->frameCounter;
     int    animationLength   = (int)currentTile->animation_len;
     tmx_anim_frame animation = currentTile->animation[*currentFrame];
-    float  frameThreshold    = (float)(GetFPS() * (int)animation.duration) / 1000.0f;    
+    float  frameThreshold    = (float)(GetFPS() * (int)animation.duration) / 1000.0f;
 
     (*frameCounter)++;
     if (*frameCounter >= (frameThreshold)) {
@@ -404,7 +404,7 @@ void UpdateTMXTileAnimation(tmx_map* map, tmx_tile** tile){
  * @param posY The Y position of the tile.
  * @param tint How to tint the tile when rendering.
  */
-void DrawTMXTile(tmx_tile* tile, unsigned int baseGid, int posX, int posY, Color tint) {
+void DrawTMXTile(tmx_tile* tile, unsigned int baseGid, int posX, int posY, Color tint, float scale) {
     Texture* image = NULL;
     Rectangle srcRect;
     Vector2 origin = {0};
@@ -418,6 +418,8 @@ void DrawTMXTile(tmx_tile* tile, unsigned int baseGid, int posX, int posY, Color
     Rectangle destRect = srcRect;
     destRect.x = (float)posX;
     destRect.y = (float)posY;
+    destRect.width = srcRect.width * scale;
+    destRect.height = srcRect.height * scale;
 
     int flags = (int)baseGid & ~TMX_FLIP_BITS_REMOVAL;
     if  (flags) {
@@ -451,7 +453,7 @@ void DrawTMXTile(tmx_tile* tile, unsigned int baseGid, int posX, int posY, Color
     }
 
     // Find the image
-    tmx_image *im = tile->image;    
+    tmx_image *im = tile->image;
     if (im && im->resource_image) {
         image = (Texture*)im->resource_image;
     }
@@ -528,7 +530,7 @@ void DrawTMXObjectTile(tmx_tile* tile, int baseGid, Rectangle destRect, float ro
 /**
  * @internal
  */
-void DrawTMXLayerTiles(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint) {
+void DrawTMXLayerTiles(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint, float scale) {
     int startX = 0, startY = 0;
     int endX = (int)map->width, endY = (int)map->height;
     int incX = 1, incY = 1;
@@ -572,7 +574,7 @@ void DrawTMXLayerTiles(tmx_map *map, tmx_layer *layer, int posX, int posY, Color
 
             int drawX = posX + x * (int) map->tile_width;
             int drawY = posY + y * (int) map->tile_height;
-            DrawTMXTile(tile, baseGid, drawX, drawY, newTint);
+            DrawTMXTile(tile, baseGid, drawX, drawY, newTint, scale);
         }
     }
 }
@@ -586,10 +588,10 @@ void DrawTMXLayerTiles(tmx_map *map, tmx_layer *layer, int posX, int posY, Color
  * @param posY The Y position of the screen.
  * @param tint How to tint the rendering of the layer.
  */
-void DrawTMXLayer(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint) {
+void DrawTMXLayer(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint, float scale) {
     switch (layer->type) {
         case L_GROUP:
-            DrawTMXLayers(map, layer->content.group_head, posX + layer->offsetx, posY + layer->offsety, tint); // recursive call
+            DrawTMXLayers(map, layer->content.group_head, posX + layer->offsetx, posY + layer->offsety, tint, scale); // recursive call
             break;
         case L_OBJGR:
             DrawTMXLayerObjects(map, layer->content.objgr, posX + layer->offsetx, posY + layer->offsety, tint);
@@ -598,7 +600,7 @@ void DrawTMXLayer(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint
             DrawTMXLayerImage(layer->content.image, posX + layer->offsetx, posY + layer->offsety, tint);
             break;
         case L_LAYER:
-	        DrawTMXLayerTiles(map, layer, posX + layer->offsetx, posY + layer->offsety, tint);
+	        DrawTMXLayerTiles(map, layer, posX + layer->offsetx, posY + layer->offsety, tint, scale);
             break;
         case L_NONE:
             // Nothing.
@@ -615,9 +617,9 @@ void DrawTMXLayer(tmx_map *map, tmx_layer *layer, int posX, int posY, Color tint
  * @param posY The Y position of the screen.
  * @param tint How to tint the rendering of the layer.
  */
-void DrawTMXLayers(tmx_map *map, tmx_layer *layers, int posX, int posY, Color tint) {
+void DrawTMXLayers(tmx_map *map, tmx_layer *layers, int posX, int posY, Color tint, float scale) {
     do {
-		if (layers->visible) DrawTMXLayer(map, layers, posX, posY, tint);
+		if (layers->visible) DrawTMXLayer(map, layers, posX, posY, tint, scale);
 	} while ((layers = layers->next));
 }
 
@@ -629,11 +631,11 @@ void DrawTMXLayers(tmx_map *map, tmx_layer *layers, int posX, int posY, Color ti
  * @param posY The Y position of the screen.
  * @param tint How to tint the rendering of the layer.
  */
-void DrawTMX(tmx_map *map, int posX, int posY, Color tint) {
+void DrawTMX(tmx_map *map, int posX, int posY, Color tint, float scale) {
     Color background = ColorFromTMX(map->backgroundcolor);
-    // TODO: Apply the tint to the background color.
-    DrawRectangle(posX, posY, (int)map->width, (int)map->height, background);
-	DrawTMXLayers(map, map->ly_head, posX, posY, tint);
+    // TODO: Apply the tint to the background color. DONE
+    DrawRectangle(posX, posY, (int)map->width, (int)map->height, ColorTint(background, tint));
+	DrawTMXLayers(map, map->ly_head, posX, posY, tint, scale);
 }
 
 /**
@@ -748,8 +750,8 @@ void CollisionsTMXForeach(tmx_map *map, tmx_collision_functor callback, void* us
                         callback(object, raylibCollision, userdata);
                         continue;
                     }
-                    int flags                  = baseGid & ~TMX_FLIP_BITS_REMOVAL;
-                    int is_diagonally_fliped   = baseGid & TMX_FLIPPED_DIAGONALLY;
+                    //int flags                  = baseGid & ~TMX_FLIP_BITS_REMOVAL;
+                    //int is_diagonally_fliped   = baseGid & TMX_FLIPPED_DIAGONALLY;
                     int is_vertically_fliped   = baseGid & TMX_FLIPPED_VERTICALLY;
                     int is_horizontally_fliped = {
                         (int)((unsigned int)baseGid & TMX_FLIPPED_HORIZONTALLY)
@@ -785,13 +787,13 @@ void CollisionsTMXForeach(tmx_map *map, tmx_collision_functor callback, void* us
                             // TODO: Rotated collisions shall be handled here
                             case OA_TOPLEFT: /*RAYLIB DEFAULT*/ {
                                 if (is_horizontally_fliped) {
-                                    int objectXOffset    = object->x + object->width;
-                                    int collisionXOffset = collision->x + collision->width;
+                                    int objectXOffset    = (int)(object->x + object->width);
+                                    int collisionXOffset = (int)(collision->x + collision->width);
                                     copy.x = objectXOffset - collisionXOffset;
                                 }
                                 if (is_vertically_fliped) {
-                                    int objectYOffset    = object->y + object->height;
-                                    int collisionYOffset = collision->y + collision->height;
+                                    int objectYOffset    = (int)(object->y + object->height);
+                                    int collisionYOffset = (int)(collision->y + collision->height);
                                     copy.y = objectYOffset - collisionYOffset;
                                 }
                             } break;
@@ -816,7 +818,7 @@ void CollisionsTMXForeach(tmx_map *map, tmx_collision_functor callback, void* us
                     } while ((collision = collision->next));
                 } while ((object = object->next));
             } break;
-            
+
             default: continue;
         }
     } while ((layer = layer->next));
