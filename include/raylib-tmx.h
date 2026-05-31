@@ -572,8 +572,12 @@ void DrawTMXLayerTiles(tmx_map *map, tmx_layer *layer, int posX, int posY, Color
             tmx_tile* tile = map->tiles[gid];
             if (tile->animation) UpdateTMXTileAnimation(map, &tile);
 
-            int drawX = posX + x * (int) map->tile_width;
-            int drawY = posY + y * (int) map->tile_height;
+            float tileW = (float)map->tile_width * scale;
+            float tileH = (float)map->tile_height * scale;
+
+            int drawX = posX + (int)((float)x * tileW);
+            int drawY = posY + (int)((float)y * tileH);
+
             DrawTMXTile(tile, baseGid, drawX, drawY, newTint, scale);
         }
     }
