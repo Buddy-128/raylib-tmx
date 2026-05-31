@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
 	BeginDrawing();
 	{
             ClearBackground(RAYWHITE);
-            DrawTMX(map, 10, 10, WHITE);
-            DrawTMXLayer(map, map->ly_head, 10, 10, WHITE);
+            DrawTMX(map, 10, 10, WHITE, 1.0);
+            DrawTMXLayer(map, map->ly_head, 10, 10, WHITE, 1.0);
 	}
 	EndDrawing();
     }
