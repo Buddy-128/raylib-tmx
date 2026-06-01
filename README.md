@@ -35,7 +35,7 @@ int main() {
         BeginDrawing();
         {
             ClearBackground(RAYWHITE);
-            DrawTMX(map, 0, 0, WHITE);
+            DrawTMX(map, 0, 0, WHITE, 1.0f);
         }
         EndDrawing();
     }
@@ -53,9 +53,9 @@ int main() {
 tmx_map* LoadTMX(const char* fileName);
 void UnloadTMX(tmx_map* map);
 Color ColorFromTMX(uint32_t color);
-void DrawTMX(tmx_map *map, int posX, int posY, Color tint);
-void DrawTMXLayer(tmx_map *map, tmx_layer *layers, int posX, int posY, Color tint);
-void DrawTMXTile(tmx_tile* tile, int posX, int posY, Color tint);
+void DrawTMX(tmx_map *map, int posX, int posY, Color tint, float scale);
+void DrawTMXLayer(tmx_map *map, tmx_layer *layers, int posX, int posY, Color tint, float scale);
+void DrawTMXTile(tmx_tile* tile, int posX, int posY, Color tint, float scale);
 void DrawTMXObjectTile(tmx_tile* tile, int baseGid, Rectangle destRect, float rotation, Color tint);
 
 typedef struct {
