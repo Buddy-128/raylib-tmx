@@ -261,8 +261,12 @@ void DrawTMXText(tmx_text* text, Rectangle dest, Color tint) {
     float fontSize = (float)text->pixelsize;
     const char* message = text->text;
     Font font = GetFontDefault();
-    // TODO: Figure out the correct spacing.
-    float spacing = (float)text->kerning * fontSize / 12.0f;
+    // TODO: Figure out the correct spacing. DONE
+    //spacing calculation taken from DrawText()
+    int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    float spacing = fontSize/defaultFontSize;
+    
     Vector2 position = {dest.x, dest.y};
 
     if (text->wrap == 0) {
